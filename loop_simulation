@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# ----- Directories ----
+SIMULATION_DIR="/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/SpaghettiCalorimeterSimulation/build"
+PYTHON_DIR="/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/Python"
+SRC_DIR="/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/SpaghettiCalorimeterSimulation/src"
+
+number_file=10	# Number of times that we want to simulate
+
+for ((i=1; i<=number_file; i++)); do
+	# ----- run simulation ------
+	cd "$SIMULATION_DIR" || { echo "Failed to navigate to $SIMULATION_DIR"; exit 1; }	# navigate to good directory
+	sed -i "s/B4_latest$((i-1)).root/B4_latest$i.root/g" "$SRC_DIR/RunAction.cc" # Replace name of root file to be coherent with current number of simulation (1,2,3...)
+	echo "Running make in $SIMULATION_DIR"
+	make	# compile simulation
+
+	echo "Running ./exampleB4c in $SIMULATION_DIR"
+	./exampleB4c	# run simulation
+
+	# ---- convert from root to csv file ----
+	cd "$PYTHON_DIR" || { echo "Failed to navigate to $PYTHON_DIR"; exit 1; }	# navigate to good directory
+	sed -i "s/B4_latest$((i-1))/B4_latest$i/g" "$PYTHON_DIR/convert_root_to_csv.py" 	# replace name of root file
+	sed -i "s/beam$((i-1)).csv/beam$i.csv/g" "$PYTHON_DIR/convert_root_to_csv.py" 	# replace name of root file
+	echo "Running convert_root_to_csv.py in $PYTHON_DIR"
+	python3 convert_root_to_csv.py
+
+	# ------ clean the root file ----
+	echo "Clean the root file"
+	rm -r "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/GEANT4/output/"	# delete output directory
+	mkdir "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/GEANT4/output/"	# create new output directory
+
+	echo "Simulation Finished."
+done
+
+cd "$PYTHON_DIR" || { echo "Failed to navigate to $PYTHON_DIR"; exit 1; }	# navigate to good directory
+echo "Running compact_multiple_csv_file.py in $PYTHON_DIR"
+python3 compact_multiple_csv_file.py	# run the python script
+
+cd "$PYTHON_DIR" || { echo "Failed to navigate to $PYTHON_DIR"; exit 1; }	# navigate to good directory 
+sed -i "s/question=input('Is the main file a root file ?: ')/question='no'/g" "$PYTHON_DIR/hit_compact.py"
+echo "Running hit_compact.py in $PYTHON_DIR"
+python3 hit_compact.py
+
+# ----- change the changed line back to origin ----
+sed -i "s/B4_latest$number_file.root/B4_latest0.root/g" "$SRC_DIR/RunAction.cc" 	# replace name root file with the original name
+sed -i "s/B4_latest$number_file/B4_latest0/g" "$PYTHON_DIR/convert_root_to_csv.py" 	# replace name of root file
+sed -i "s/beam$number_file.csv/beam0.csv/g" "$PYTHON_DIR/convert_root_to_csv.py" 	# replace name of root file 
+sed -i "s/question='no'/question=input('Is the main file a root file ?: ')/g" "$PYTHON_DIR/hit_compact.py"
+
+# ------ clean the csv file ------
+rm -r "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/ML/csv_file/" # delete csv_file directory
+mkdir "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/ML/csv_file/" # create new csv_file directory
+echo "Script executed succesfully"
