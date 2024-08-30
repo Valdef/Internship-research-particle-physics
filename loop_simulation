@@ -7,7 +7,7 @@ SRC_DIR="/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/SpaghettiCal
 
 number_file=10	# Number of times that we want to simulate
 
-for ((i=1; i<=number_file; i++)); do
+for ((i=0; i<=number_file+0; i++)); do
 	# ----- run simulation ------
 	cd "$SIMULATION_DIR" || { echo "Failed to navigate to $SIMULATION_DIR"; exit 1; }	# navigate to good directory
 	sed -i "s/B4_latest$((i-1)).root/B4_latest$i.root/g" "$SRC_DIR/RunAction.cc" # Replace name of root file to be coherent with current number of simulation (1,2,3...)
@@ -23,6 +23,8 @@ for ((i=1; i<=number_file; i++)); do
 	sed -i "s/beam$((i-1)).csv/beam$i.csv/g" "$PYTHON_DIR/convert_root_to_csv.py" 	# replace name of root file
 	echo "Running convert_root_to_csv.py in $PYTHON_DIR"
 	python3 convert_root_to_csv.py
+	
+	wait
 
 	# ------ clean the root file ----
 	echo "Clean the root file"
@@ -48,6 +50,6 @@ sed -i "s/beam$number_file.csv/beam0.csv/g" "$PYTHON_DIR/convert_root_to_csv.py"
 sed -i "s/question='no'/question=input('Is the main file a root file ?: ')/g" "$PYTHON_DIR/hit_compact.py"
 
 # ------ clean the csv file ------
-rm -r "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/ML/csv_file/" # delete csv_file directory
-mkdir "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/ML/csv_file/" # create new csv_file directory
-echo "Script executed succesfully"
+#rm -r "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/ML/csv_file/" # delete csv_file directory
+#mkdir "/shared/physics/physdata/nuclear/ePIC_EIC/vd613/Internship/ML/csv_file/" # create new csv_file directory
+#echo "Script executed succesfully"
